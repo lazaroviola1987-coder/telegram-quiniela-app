@@ -29,6 +29,15 @@ export default function App() {
   const isValid = totalSelected === 14 && totalDoubles === 2;
   const progress = Math.round((totalSelected / 14) * 100);
 
+  const copyText = async (text, message) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(message);
+    } catch {
+      alert("No se pudo copiar. Mantén presionado el texto y cópialo manualmente.");
+    }
+  };
+
   const select = (index, value) => {
     const currentValue = picks[index];
     const isDouble = value === "1X" || value === "X2";
@@ -85,20 +94,42 @@ export default function App() {
               <b>Importe:</b> $1,000
             </p>
 
-            <p>
+            <div style={copyBox}>
               <b>Tarjeta:</b>
-              <br />
-              9205 1299 7241 1939
-            </p>
 
-            <p>
+              <div style={copyRow}>
+                <span style={copyTextStyle}>9205 1299 7241 1939</span>
+
+                <button
+                  onClick={() =>
+                    copyText("9205129972411939", "Tarjeta copiada")
+                  }
+                  style={copyButton}
+                >
+                  📋 Copiar
+                </button>
+              </div>
+            </div>
+
+            <div style={copyBox}>
               <b>Número de confirmación:</b>
-              <br />
-              50156374
-            </p>
+
+              <div style={copyRow}>
+                <span style={copyTextStyle}>50156374</span>
+
+                <button
+                  onClick={() =>
+                    copyText("50156374", "Número de confirmación copiado")
+                  }
+                  style={copyButton}
+                >
+                  📋 Copiar
+                </button>
+              </div>
+            </div>
 
             <p style={{ color: "#facc15" }}>
-              ⚠️ Después de realizar el pago debes conservar el comprobante para validar tu boleto.
+              ⚠️ Después de realizar el pago conserva el comprobante para validar tu boleto.
             </p>
 
             <p>
@@ -334,4 +365,36 @@ const paymentBox = {
   padding: 14,
   margin: "16px 0",
   lineHeight: 1.8,
+};
+
+const copyBox = {
+  background: "#111827",
+  padding: 12,
+  borderRadius: 10,
+  marginBottom: 12,
+};
+
+const copyRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: 10,
+  marginTop: 8,
+};
+
+const copyTextStyle = {
+  wordBreak: "break-word",
+  fontWeight: "bold",
+  color: "white",
+};
+
+const copyButton = {
+  background: "#22c55e",
+  border: "none",
+  color: "white",
+  padding: "7px 10px",
+  borderRadius: 8,
+  cursor: "pointer",
+  fontWeight: "bold",
+  whiteSpace: "nowrap",
 };
