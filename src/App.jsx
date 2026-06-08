@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 
 const partidosData = [
   ["🇧🇷", "Brazil", "🇲🇦", "Marruecos"],
@@ -22,6 +23,8 @@ export default function App() {
   const [screen, setScreen] = useState("ticket");
   const [reference, setReference] = useState("");
   const [receipt, setReceipt] = useState(null);
+  const [savedTicket, setSavedTicket] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const totalSelected = Object.keys(picks).length;
   const totalDoubles = Object.values(picks).filter(
@@ -30,7 +33,6 @@ export default function App() {
 
   const isValid = totalSelected === 14 && totalDoubles === 2;
   const progress = Math.round((totalSelected / 14) * 100);
-  const ticketNumber = "TK-" + Math.floor(100000 + Math.random() * 900000);
 
   const copyText = async (text, message) => {
     try {
@@ -52,6 +54,41 @@ export default function App() {
     }
 
     setPicks({ ...picks, [index]: value });
+  };
+
+  const sendReceipt = async () => {
+    if (!reference.trim() || !receipt) {
+      alert("Debes escribir la referencia y subir la captura.");
+      return;
+    }
+
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("user", "Invitado");
+    formData.append("reference", reference);
+    formData.append("picks", JSON.stringify(picks));
+    formData.append("receipt", receipt);
+
+    try {
+      const response = await axios.post(
+        "http://localhost:4000/api/tickets",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setSavedTicket(response.data.ticket);
+      setScreen("success");
+    } catch (error) {
+      console.error(error);
+      alert("Error enviando el comprobante. Verifica que el backend esté funcionando.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const optionStyle = (selected, type) => ({
@@ -80,11 +117,24 @@ export default function App() {
         </div>
 
         <div style={cardStyle}>
-          <p><b>Estado:</b> 🟡 Pago pendiente de revisión</p>
-          <p><b>Referencia:</b> {reference}</p>
-          <p><b>Comprobante:</b> {receipt?.name}</p>
-          <p><b>Selecciones:</b> {totalSelected}/14</p>
-          <p><b>Dobles:</b> {totalDoubles}/2</p>
+          <p>
+            <b>Ticket:</b> {savedTicket?.id || "Pendiente"}
+          </p>
+          <p>
+            <b>Estado:</b> 🟡 Pago pendiente de revisión
+          </p>
+          <p>
+            <b>Referencia:</b> {reference}
+          </p>
+          <p>
+            <b>Comprobante:</b> {receipt?.name}
+          </p>
+          <p>
+            <b>Selecciones:</b> {totalSelected}/14
+          </p>
+          <p>
+            <b>Dobles:</b> {totalDoubles}/2
+          </p>
 
           <button style={mainButton} onClick={() => setScreen("ticket")}>
             Volver al inicio
@@ -95,7 +145,7 @@ export default function App() {
   }
 
   if (screen === "receipt") {
-    const canSend = reference.trim().length >= 3 && receipt;
+    const canSend = reference.trim().length >= 3 && receipt && !loading;
 
     return (
       <div style={pageStyle}>
@@ -105,7 +155,9 @@ export default function App() {
         </div>
 
         <div style={cardStyle}>
-          <label><b>📝 Referencia de pago</b></label>
+          <label>
+            <b>📝 Referencia de pago</b>
+          </label>
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
@@ -113,7 +165,9 @@ export default function App() {
             style={inputStyle}
           />
 
-          <label><b>📸 Captura del comprobante</b></label>
+          <label>
+            <b>📸 Captura del comprobante</b>
+          </label>
           <input
             type="file"
             accept="image/*"
@@ -134,9 +188,9 @@ export default function App() {
               background: canSend ? "#22c55e" : "#475569",
               cursor: canSend ? "pointer" : "not-allowed",
             }}
-            onClick={() => setScreen("success")}
+            onClick={sendReceipt}
           >
-            ✅ ENVIAR COMPROBANTE
+            {loading ? "Enviando..." : "✅ ENVIAR COMPROBANTE"}
           </button>
 
           <button style={secondaryButton} onClick={() => setScreen("payment")}>
@@ -167,14 +221,18 @@ export default function App() {
               💳 Datos para el pago
             </h3>
 
-            <p><b>Importe:</b> $1,000</p>
+            <p>
+              <b>Importe:</b> $1,000
+            </p>
 
             <div style={copyBox}>
               <b>Tarjeta:</b>
               <div style={copyRow}>
                 <span style={copyTextStyle}>9205 1299 7241 1939</span>
                 <button
-                  onClick={() => copyText("9205129972411939", "Tarjeta copiada")}
+                  onClick={() =>
+                    copyText("9205129972411939", "Tarjeta copiada")
+                  }
                   style={copyButton}
                 >
                   📋 Copiar
@@ -199,7 +257,9 @@ export default function App() {
               ⚠️ Conserva el comprobante para validar tu boleto.
             </p>
 
-            <p><b>Estado:</b> 🟡 Pendiente de pago</p>
+            <p>
+              <b>Estado:</b> 🟡 Pendiente de pago
+            </p>
           </div>
 
           <button style={mainButton} onClick={() => setScreen("receipt")}>
@@ -251,14 +311,35 @@ export default function App() {
             </div>
 
             <div style={optionsRow}>
-              <button style={optionStyle(selected === "1", "normal")} onClick={() => select(i, "1")}>1</button>
-              <button style={optionStyle(selected === "2", "normal")} onClick={() => select(i, "2")}>2</button>
-              <button style={optionStyle(selected === "1X", "double")} onClick={() => select(i, "1X")}>1X</button>
-              <button style={optionStyle(selected === "X2", "double")} onClick={() => select(i, "X2")}>X2</button>
+              <button
+                style={optionStyle(selected === "1", "normal")}
+                onClick={() => select(i, "1")}
+              >
+                1
+              </button>
+              <button
+                style={optionStyle(selected === "2", "normal")}
+                onClick={() => select(i, "2")}
+              >
+                2
+              </button>
+              <button
+                style={optionStyle(selected === "1X", "double")}
+                onClick={() => select(i, "1X")}
+              >
+                1X
+              </button>
+              <button
+                style={optionStyle(selected === "X2", "double")}
+                onClick={() => select(i, "X2")}
+              >
+                X2
+              </button>
             </div>
 
             <p style={{ color: "#94a3b8", marginBottom: 0 }}>
-              Selección: <b style={{ color: "white" }}>{selected || "Ninguna"}</b>
+              Selección:{" "}
+              <b style={{ color: "white" }}>{selected || "Ninguna"}</b>
             </p>
           </div>
         );
