@@ -72,25 +72,49 @@ export default function App() {
 
         <div style={cardStyle}>
           <h3>📌 Instrucciones</h3>
-          <p>1. Realiza el pago por el método indicado.</p>
+          <p>1. Realiza el pago usando los datos indicados.</p>
           <p>2. Toma una captura del comprobante.</p>
-          <p>3. Envíala al administrador para validar tu boleto.</p>
+          <p>3. Pulsa el botón de confirmación.</p>
 
           <div style={paymentBox}>
-            <b>Método:</b> Transferencia / Pago manual
-            <br />
-            <b>Concepto:</b> Boleto Mundial
-            <br />
-            <b>Estado:</b> 🟡 Pendiente de pago
+            <h3 style={{ color: "#facc15", marginTop: 0 }}>
+              💳 Datos para el pago
+            </h3>
+
+            <p>
+              <b>Importe:</b> $1,000
+            </p>
+
+            <p>
+              <b>Tarjeta:</b>
+              <br />
+              9205 1299 7241 1939
+            </p>
+
+            <p>
+              <b>Número de confirmación:</b>
+              <br />
+              50156374
+            </p>
+
+            <p style={{ color: "#facc15" }}>
+              ⚠️ Después de realizar el pago debes conservar el comprobante para validar tu boleto.
+            </p>
+
+            <p>
+              <b>Estado:</b> 🟡 Pendiente de pago
+            </p>
           </div>
 
           <button
             style={mainButton}
             onClick={() =>
-              alert("Aquí luego agregaremos subida de captura o envío al admin.")
+              alert(
+                "Pago reportado correctamente. En el siguiente paso agregaremos el envío de captura del comprobante."
+              )
             }
           >
-            📤 Ya realicé el pago
+            ✅ YA REALICÉ EL PAGO
           </button>
 
           <button style={secondaryButton} onClick={() => setScreen("ticket")}>
