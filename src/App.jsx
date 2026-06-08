@@ -20,6 +20,8 @@ const partidosData = [
 export default function App() {
   const [picks, setPicks] = useState({});
   const [screen, setScreen] = useState("ticket");
+  const [reference, setReference] = useState("");
+  const [receipt, setReceipt] = useState(null);
 
   const totalSelected = Object.keys(picks).length;
   const totalDoubles = Object.values(picks).filter(
@@ -28,13 +30,14 @@ export default function App() {
 
   const isValid = totalSelected === 14 && totalDoubles === 2;
   const progress = Math.round((totalSelected / 14) * 100);
+  const ticketNumber = "TK-" + Math.floor(100000 + Math.random() * 900000);
 
   const copyText = async (text, message) => {
     try {
       await navigator.clipboard.writeText(text);
       alert(message);
     } catch {
-      alert("No se pudo copiar. Mantén presionado el texto y cópialo manualmente.");
+      alert("No se pudo copiar. Copia manualmente.");
     }
   };
 
@@ -48,10 +51,7 @@ export default function App() {
       return;
     }
 
-    setPicks({
-      ...picks,
-      [index]: value,
-    });
+    setPicks({ ...picks, [index]: value });
   };
 
   const optionStyle = (selected, type) => ({
@@ -70,40 +70,111 @@ export default function App() {
       : "#1e293b",
   });
 
+  if (screen === "success") {
+    return (
+      <div style={pageStyle}>
+        <div style={headerCard}>
+          <h2>🎟️ Boleto recibido</h2>
+          <h1 style={{ color: "#facc15" }}>Pendiente de validación</h1>
+          <p>Tu comprobante fue enviado correctamente.</p>
+        </div>
+
+        <div style={cardStyle}>
+          <p><b>Estado:</b> 🟡 Pago pendiente de revisión</p>
+          <p><b>Referencia:</b> {reference}</p>
+          <p><b>Comprobante:</b> {receipt?.name}</p>
+          <p><b>Selecciones:</b> {totalSelected}/14</p>
+          <p><b>Dobles:</b> {totalDoubles}/2</p>
+
+          <button style={mainButton} onClick={() => setScreen("ticket")}>
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (screen === "receipt") {
+    const canSend = reference.trim().length >= 3 && receipt;
+
+    return (
+      <div style={pageStyle}>
+        <div style={headerCard}>
+          <h2>📤 Enviar comprobante</h2>
+          <p>Sube la captura del pago y escribe tu referencia.</p>
+        </div>
+
+        <div style={cardStyle}>
+          <label><b>📝 Referencia de pago</b></label>
+          <input
+            value={reference}
+            onChange={(e) => setReference(e.target.value)}
+            placeholder="Escribe la referencia del pago"
+            style={inputStyle}
+          />
+
+          <label><b>📸 Captura del comprobante</b></label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setReceipt(e.target.files[0])}
+            style={fileInputStyle}
+          />
+
+          {receipt && (
+            <p style={{ color: "#22c55e" }}>
+              ✅ Archivo seleccionado: {receipt.name}
+            </p>
+          )}
+
+          <button
+            disabled={!canSend}
+            style={{
+              ...mainButton,
+              background: canSend ? "#22c55e" : "#475569",
+              cursor: canSend ? "pointer" : "not-allowed",
+            }}
+            onClick={() => setScreen("success")}
+          >
+            ✅ ENVIAR COMPROBANTE
+          </button>
+
+          <button style={secondaryButton} onClick={() => setScreen("payment")}>
+            Volver al pago
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "payment") {
     return (
       <div style={pageStyle}>
         <div style={headerCard}>
           <h2>💳 Pago del boleto</h2>
           <h1 style={{ color: "#facc15" }}>$1,000</h1>
-          <p>Para validar tu jugada debes realizar el pago del boleto.</p>
+          <p>Realiza el pago para validar tu jugada.</p>
         </div>
 
         <div style={cardStyle}>
           <h3>📌 Instrucciones</h3>
-          <p>1. Realiza el pago usando los datos indicados.</p>
-          <p>2. Toma una captura del comprobante.</p>
-          <p>3. Pulsa el botón de confirmación.</p>
+          <p>1. Copia los datos de pago.</p>
+          <p>2. Realiza el pago.</p>
+          <p>3. Toma captura y envía el comprobante.</p>
 
           <div style={paymentBox}>
             <h3 style={{ color: "#facc15", marginTop: 0 }}>
               💳 Datos para el pago
             </h3>
 
-            <p>
-              <b>Importe:</b> $1,000
-            </p>
+            <p><b>Importe:</b> $1,000</p>
 
             <div style={copyBox}>
               <b>Tarjeta:</b>
-
               <div style={copyRow}>
                 <span style={copyTextStyle}>9205 1299 7241 1939</span>
-
                 <button
-                  onClick={() =>
-                    copyText("9205129972411939", "Tarjeta copiada")
-                  }
+                  onClick={() => copyText("9205129972411939", "Tarjeta copiada")}
                   style={copyButton}
                 >
                   📋 Copiar
@@ -113,14 +184,10 @@ export default function App() {
 
             <div style={copyBox}>
               <b>Número de confirmación:</b>
-
               <div style={copyRow}>
                 <span style={copyTextStyle}>50156374</span>
-
                 <button
-                  onClick={() =>
-                    copyText("50156374", "Número de confirmación copiado")
-                  }
+                  onClick={() => copyText("50156374", "Número copiado")}
                   style={copyButton}
                 >
                   📋 Copiar
@@ -129,22 +196,13 @@ export default function App() {
             </div>
 
             <p style={{ color: "#facc15" }}>
-              ⚠️ Después de realizar el pago conserva el comprobante para validar tu boleto.
+              ⚠️ Conserva el comprobante para validar tu boleto.
             </p>
 
-            <p>
-              <b>Estado:</b> 🟡 Pendiente de pago
-            </p>
+            <p><b>Estado:</b> 🟡 Pendiente de pago</p>
           </div>
 
-          <button
-            style={mainButton}
-            onClick={() =>
-              alert(
-                "Pago reportado correctamente. En el siguiente paso agregaremos el envío de captura del comprobante."
-              )
-            }
-          >
+          <button style={mainButton} onClick={() => setScreen("receipt")}>
             ✅ YA REALICÉ EL PAGO
           </button>
 
@@ -193,33 +251,10 @@ export default function App() {
             </div>
 
             <div style={optionsRow}>
-              <button
-                style={optionStyle(selected === "1", "normal")}
-                onClick={() => select(i, "1")}
-              >
-                1
-              </button>
-
-              <button
-                style={optionStyle(selected === "2", "normal")}
-                onClick={() => select(i, "2")}
-              >
-                2
-              </button>
-
-              <button
-                style={optionStyle(selected === "1X", "double")}
-                onClick={() => select(i, "1X")}
-              >
-                1X
-              </button>
-
-              <button
-                style={optionStyle(selected === "X2", "double")}
-                onClick={() => select(i, "X2")}
-              >
-                X2
-              </button>
+              <button style={optionStyle(selected === "1", "normal")} onClick={() => select(i, "1")}>1</button>
+              <button style={optionStyle(selected === "2", "normal")} onClick={() => select(i, "2")}>2</button>
+              <button style={optionStyle(selected === "1X", "double")} onClick={() => select(i, "1X")}>1X</button>
+              <button style={optionStyle(selected === "X2", "double")} onClick={() => select(i, "X2")}>X2</button>
             </div>
 
             <p style={{ color: "#94a3b8", marginBottom: 0 }}>
@@ -397,4 +432,29 @@ const copyButton = {
   cursor: "pointer",
   fontWeight: "bold",
   whiteSpace: "nowrap",
+};
+
+const inputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: 14,
+  marginTop: 8,
+  marginBottom: 16,
+  borderRadius: 12,
+  border: "1px solid #334155",
+  background: "#020617",
+  color: "white",
+  fontSize: 16,
+};
+
+const fileInputStyle = {
+  width: "100%",
+  boxSizing: "border-box",
+  padding: 14,
+  marginTop: 8,
+  marginBottom: 16,
+  borderRadius: 12,
+  border: "1px solid #334155",
+  background: "#020617",
+  color: "white",
 };
