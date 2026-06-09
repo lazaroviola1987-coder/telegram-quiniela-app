@@ -11,6 +11,7 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
@@ -36,10 +37,10 @@ app.post("/api/tickets", upload.single("receipt"), (req, res) => {
 
   const newTicket = {
     id: "TK-" + Date.now(),
-   user: req.body.user || "Invitado",
-telegramId: req.body.telegramId || null,
-username: req.body.username || null,
-firstName: req.body.firstName || null,
+    user: req.body.user || "Invitado",
+    telegramId: req.body.telegramId || null,
+    username: req.body.username || null,
+    firstName: req.body.firstName || null,
     reference: req.body.reference,
     picks: JSON.parse(req.body.picks),
     receipt: req.file ? req.file.filename : null,
@@ -59,6 +60,17 @@ firstName: req.body.firstName || null,
 app.get("/api/tickets", (req, res) => {
   const tickets = JSON.parse(fs.readFileSync("tickets.json"));
   res.json(tickets);
+});
+
+app.get("/api/tickets/user/:telegramId", (req, res) => {
+  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
+  const { telegramId } = req.params;
+
+  const userTickets = tickets.filter(
+    (ticket) => String(ticket.telegramId) === String(telegramId)
+  );
+
+  res.json(userTickets);
 });
 
 app.put("/api/tickets/:id/status", (req, res) => {
@@ -86,25 +98,6 @@ app.put("/api/tickets/:id/status", (req, res) => {
   });
 });
 
-app.get("/api/tickets/user/:telegramId", (req, res) => {
-  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
-  const { telegramId } = req.params;
-
-  const userTickets = tickets.filter(
-    (ticket) => String(ticket.telegramId) === String(telegramId)
-  );
-
-  res.json(userTickets);
-});
-  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
-  const { user } = req.params;
-
-  const userTickets = tickets.filter((ticket) => ticket.user === user);
-
-  res.json(userTickets);
-});
-
 app.listen(PORT, () => {
-  console.log(`Backend funcionando en http://localhost:${PORT}`);
+  console.log(`Backend funcionando en puerto ${PORT}`);
 });
-
