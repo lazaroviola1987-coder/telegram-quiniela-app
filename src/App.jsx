@@ -29,6 +29,7 @@ function UserApp() {
   const [receipt, setReceipt] = useState(null);
   const [savedTicket, setSavedTicket] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [myTickets, setMyTickets] = useState([]);
 
   const totalSelected = Object.keys(picks).length;
   const totalDoubles = Object.values(picks).filter(
@@ -76,9 +77,7 @@ function UserApp() {
 
     try {
       const response = await axios.post(`${API_URL}/api/tickets`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       setSavedTicket(response.data.ticket);
@@ -88,6 +87,17 @@ function UserApp() {
       alert("Error enviando el comprobante.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMyTickets = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/tickets/user/Invitado`);
+      setMyTickets(res.data);
+      setScreen("myTickets");
+    } catch (error) {
+      alert("Error cargando tus boletos.");
+      console.error(error);
     }
   };
 
@@ -107,6 +117,50 @@ function UserApp() {
       : "#1e293b",
   });
 
+  if (screen === "myTickets") {
+    return (
+      <div style={pageStyle}>
+        <div style={headerCard}>
+          <h2>📋 Mis Boletos</h2>
+          <p>Consulta el estado de tus jugadas.</p>
+        </div>
+
+        {myTickets.length === 0 && (
+          <div style={cardStyle}>
+            <p>No tienes boletos registrados todavía.</p>
+          </div>
+        )}
+
+        {myTickets.map((ticket) => (
+          <div key={ticket.id} style={cardStyle}>
+            <h3>🎟️ {ticket.id}</h3>
+            <p><b>Referencia:</b> {ticket.reference}</p>
+            <p>
+              <b>Estado:</b>{" "}
+              {ticket.status === "approved"
+                ? "🟢 Aprobado"
+                : ticket.status === "rejected"
+                ? "🔴 Rechazado"
+                : "🟡 Pendiente"}
+            </p>
+            <p><b>Fecha:</b> {ticket.createdAt}</p>
+
+            <details>
+              <summary style={{ cursor: "pointer", color: "#facc15" }}>
+                Ver selecciones
+              </summary>
+              <pre style={preStyle}>{JSON.stringify(ticket.picks, null, 2)}</pre>
+            </details>
+          </div>
+        ))}
+
+        <button style={mainButton} onClick={() => setScreen("ticket")}>
+          Crear nuevo boleto
+        </button>
+      </div>
+    );
+  }
+
   if (screen === "success") {
     return (
       <div style={pageStyle}>
@@ -121,11 +175,13 @@ function UserApp() {
           <p><b>Estado:</b> 🟡 Pago pendiente de revisión</p>
           <p><b>Referencia:</b> {reference}</p>
           <p><b>Comprobante:</b> {receipt?.name}</p>
-          <p><b>Selecciones:</b> {totalSelected}/14</p>
-          <p><b>Dobles:</b> {totalDoubles}/2</p>
 
-          <button style={mainButton} onClick={() => setScreen("ticket")}>
-            Volver al inicio
+          <button style={mainButton} onClick={loadMyTickets}>
+            📋 Ver Mis Boletos
+          </button>
+
+          <button style={secondaryButton} onClick={() => setScreen("ticket")}>
+            Crear nuevo boleto
           </button>
         </div>
       </div>
@@ -236,8 +292,6 @@ function UserApp() {
             <p style={{ color: "#facc15" }}>
               ⚠️ Conserva el comprobante para validar tu boleto.
             </p>
-
-            <p><b>Estado:</b> 🟡 Pendiente de pago</p>
           </div>
 
           <button style={mainButton} onClick={() => setScreen("receipt")}>
@@ -258,6 +312,10 @@ function UserApp() {
         <h2>🏆 PROMOCIÓN MUNDIAL</h2>
         <h1 style={{ color: "#facc15" }}>GANA $100,000</h1>
         <p>Selecciona 12 ganadores y 2 dobles oportunidades</p>
+
+        <button style={secondaryButton} onClick={loadMyTickets}>
+          📋 Mis Boletos
+        </button>
 
         <div style={progressOuter}>
           <div style={{ ...progressInner, width: `${progress}%` }} />
@@ -358,9 +416,7 @@ function AdminPanel() {
   };
 
   useEffect(() => {
-    if (isAdminLogged) {
-      loadTickets();
-    }
+    if (isAdminLogged) loadTickets();
   }, [isAdminLogged]);
 
   if (!isAdminLogged) {
@@ -381,11 +437,8 @@ function AdminPanel() {
           <button
             style={mainButton}
             onClick={() => {
-              if (adminCode === ADMIN_PASSWORD) {
-                setIsAdminLogged(true);
-              } else {
-                alert("Código incorrecto");
-              }
+              if (adminCode === ADMIN_PASSWORD) setIsAdminLogged(true);
+              else alert("Código incorrecto");
             }}
           >
             Entrar
@@ -474,29 +527,19 @@ function AdminPanel() {
             </div>
           )}
 
-          <div style={{ marginTop: 12 }}>
-            <details>
-              <summary style={{ cursor: "pointer", color: "#facc15" }}>
-                Ver selecciones
-              </summary>
-              <pre style={preStyle}>
-                {JSON.stringify(ticket.picks, null, 2)}
-              </pre>
-            </details>
-          </div>
+          <details style={{ marginTop: 12 }}>
+            <summary style={{ cursor: "pointer", color: "#facc15" }}>
+              Ver selecciones
+            </summary>
+            <pre style={preStyle}>{JSON.stringify(ticket.picks, null, 2)}</pre>
+          </details>
 
           <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
-            <button
-              style={approveBtn}
-              onClick={() => updateStatus(ticket.id, "approved")}
-            >
+            <button style={approveBtn} onClick={() => updateStatus(ticket.id, "approved")}>
               ✅ Aprobar
             </button>
 
-            <button
-              style={rejectBtn}
-              onClick={() => updateStatus(ticket.id, "rejected")}
-            >
+            <button style={rejectBtn} onClick={() => updateStatus(ticket.id, "rejected")}>
               ❌ Rechazar
             </button>
           </div>
@@ -540,7 +583,6 @@ const cardStyle = {
   borderRadius: 16,
   padding: 14,
   marginBottom: 12,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
 };
 
 const matchRow = {
