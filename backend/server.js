@@ -23,6 +23,10 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+app.get("/", (req, res) => {
+  res.send("Backend de quiniela funcionando correctamente");
+});
+
 app.post("/api/tickets", upload.single("receipt"), (req, res) => {
   const tickets = JSON.parse(fs.readFileSync("tickets.json"));
 
@@ -48,6 +52,31 @@ app.post("/api/tickets", upload.single("receipt"), (req, res) => {
 app.get("/api/tickets", (req, res) => {
   const tickets = JSON.parse(fs.readFileSync("tickets.json"));
   res.json(tickets);
+});
+
+app.put("/api/tickets/:id/status", (req, res) => {
+  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
+  const { id } = req.params;
+  const { status } = req.body;
+
+  const ticketIndex = tickets.findIndex((ticket) => ticket.id === id);
+
+  if (ticketIndex === -1) {
+    return res.status(404).json({
+      success: false,
+      message: "Ticket no encontrado",
+    });
+  }
+
+  tickets[ticketIndex].status = status;
+  tickets[ticketIndex].updatedAt = new Date().toISOString();
+
+  fs.writeFileSync("tickets.json", JSON.stringify(tickets, null, 2));
+
+  res.json({
+    success: true,
+    ticket: tickets[ticketIndex],
+  });
 });
 
 app.listen(PORT, () => {
