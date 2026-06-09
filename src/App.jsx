@@ -72,7 +72,7 @@ export default function App() {
 
     try {
       const response = await axios.post(
-        "http://localhost:4000/api/tickets",
+        "https://telegram-quiniela-app-production.up.railway.app/api/tickets",
         formData,
         {
           headers: {
