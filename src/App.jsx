@@ -332,6 +332,7 @@ function AdminPanel() {
   const [adminCode, setAdminCode] = useState("");
   const [isAdminLogged, setIsAdminLogged] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const loadTickets = async () => {
     setLoading(true);
@@ -398,6 +399,11 @@ function AdminPanel() {
   const approved = tickets.filter((t) => t.status === "approved").length;
   const rejected = tickets.filter((t) => t.status === "rejected").length;
 
+  const filteredTickets = tickets.filter((ticket) => {
+    const text = `${ticket.id} ${ticket.reference} ${ticket.status} ${ticket.user}`.toLowerCase();
+    return text.includes(search.toLowerCase());
+  });
+
   return (
     <div style={pageStyle}>
       <div style={headerCard}>
@@ -416,9 +422,16 @@ function AdminPanel() {
         🔄 Actualizar
       </button>
 
+      <input
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Buscar por ticket, referencia, usuario o estado"
+        style={inputStyle}
+      />
+
       {loading && <p>Cargando boletos...</p>}
 
-      {tickets.map((ticket) => (
+      {filteredTickets.map((ticket) => (
         <div key={ticket.id} style={cardStyle}>
           <h3>🎟️ {ticket.id}</h3>
           <p><b>Usuario:</b> {ticket.user}</p>
@@ -427,14 +440,38 @@ function AdminPanel() {
           <p><b>Fecha:</b> {ticket.createdAt}</p>
 
           {ticket.receipt && (
-            <a
-              href={`${API_URL}/uploads/${ticket.receipt}`}
-              target="_blank"
-              rel="noreferrer"
-              style={{ color: "#38bdf8", fontWeight: "bold" }}
-            >
-              📷 Ver comprobante
-            </a>
+            <div style={{ marginTop: 12 }}>
+              <p style={{ color: "#38bdf8", fontWeight: "bold" }}>
+                📷 Comprobante:
+              </p>
+
+              <img
+                src={`${API_URL}/uploads/${ticket.receipt}`}
+                alt="Comprobante de pago"
+                style={{
+                  width: "100%",
+                  maxHeight: 320,
+                  objectFit: "contain",
+                  borderRadius: 12,
+                  border: "1px solid #334155",
+                  background: "#020617",
+                }}
+              />
+
+              <a
+                href={`${API_URL}/uploads/${ticket.receipt}`}
+                target="_blank"
+                rel="noreferrer"
+                style={{
+                  color: "#facc15",
+                  display: "block",
+                  marginTop: 8,
+                  fontWeight: "bold",
+                }}
+              >
+                Abrir imagen completa
+              </a>
+            </div>
           )}
 
           <div style={{ marginTop: 12 }}>
