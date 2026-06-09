@@ -32,7 +32,10 @@ app.post("/api/tickets", upload.single("receipt"), (req, res) => {
 
   const newTicket = {
     id: "TK-" + Date.now(),
-    user: req.body.user || "Invitado",
+   user: req.body.user || "Invitado",
+telegramId: req.body.telegramId || null,
+username: req.body.username || null,
+firstName: req.body.firstName || null,
     reference: req.body.reference,
     picks: JSON.parse(req.body.picks),
     receipt: req.file ? req.file.filename : null,
@@ -79,7 +82,16 @@ app.put("/api/tickets/:id/status", (req, res) => {
   });
 });
 
-app.get("/api/tickets/user/:user", (req, res) => {
+app.get("/api/tickets/user/:telegramId", (req, res) => {
+  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
+  const { telegramId } = req.params;
+
+  const userTickets = tickets.filter(
+    (ticket) => String(ticket.telegramId) === String(telegramId)
+  );
+
+  res.json(userTickets);
+});
   const tickets = JSON.parse(fs.readFileSync("tickets.json"));
   const { user } = req.params;
 
