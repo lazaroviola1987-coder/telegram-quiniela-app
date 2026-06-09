@@ -57,39 +57,39 @@ export default function App() {
   };
 
   const sendReceipt = async () => {
-    if (!reference.trim() || !receipt) {
-      alert("Debes escribir la referencia y subir la captura.");
-      return;
-    }
+  if (!reference.trim() || !receipt) {
+    alert("Debes escribir la referencia y subir la captura.");
+    return;
+  }
 
-    setLoading(true);
+  setLoading(true);
 
-    const formData = new FormData();
-    formData.append("user", "Invitado");
-    formData.append("reference", reference);
-    formData.append("picks", JSON.stringify(picks));
-    formData.append("receipt", receipt);
+  const formData = new FormData();
+  formData.append("user", "Invitado");
+  formData.append("reference", reference);
+  formData.append("picks", JSON.stringify(picks));
+  formData.append("receipt", receipt);
 
-    try {
-      const response = await axios.post(
-        "https://telegram-quiniela-app-production.up.railway.app/api/tickets"
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+  try {
+    const response = await axios.post(
+      "https://telegram-quiniela-app-production.up.railway.app/api/tickets",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
-      setSavedTicket(response.data.ticket);
-      setScreen("success");
-    } catch (error) {
-      console.error(error);
-      alert("Error enviando el comprobante. Verifica que el backend esté funcionando.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setSavedTicket(response.data.ticket);
+    setScreen("success");
+  } catch (error) {
+    console.error(error);
+    alert("Error enviando el comprobante.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const optionStyle = (selected, type) => ({
     flex: 1,
