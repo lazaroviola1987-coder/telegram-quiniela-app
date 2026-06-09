@@ -10,6 +10,10 @@ function UserApp() {
 
 function AdminPanel() {
   const [tickets, setTickets] = useState([]);
+  const [adminCode, setAdminCode] = useState("");
+  const [isAdminLogged, setIsAdminLogged] = useState(false);
+
+  const ADMIN_PASSWORD = "CRYPTOGOAT2026";
 
   const loadTickets = async () => {
     const res = await axios.get(`${API_URL}/api/tickets`);
@@ -24,7 +28,37 @@ function AdminPanel() {
   useEffect(() => {
     loadTickets();
   }, []);
+if (!isAdminLogged) {
+  return (
+    <div style={pageStyle}>
+      <div style={cardStyle}>
+        <h1>🔒 Acceso Admin</h1>
+        <p>Introduce el código de administrador.</p>
 
+        <input
+          type="password"
+          value={adminCode}
+          onChange={(e) => setAdminCode(e.target.value)}
+          placeholder="Código de acceso"
+          style={inputStyle}
+        />
+
+        <button
+          style={mainButton}
+          onClick={() => {
+            if (adminCode === ADMIN_PASSWORD) {
+              setIsAdminLogged(true);
+            } else {
+              alert("Código incorrecto");
+            }
+          }}
+        >
+          Entrar
+        </button>
+      </div>
+    </div>
+  );
+}
   return (
     <div style={pageStyle}>
       <h1>👨‍💼 Panel Admin</h1>
