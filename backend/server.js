@@ -82,3 +82,12 @@ app.put("/api/tickets/:id/status", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Backend funcionando en http://localhost:${PORT}`);
 });
+
+app.get("/api/tickets/user/:user", (req, res) => {
+  const tickets = JSON.parse(fs.readFileSync("tickets.json"));
+  const { user } = req.params;
+
+  const userTickets = tickets.filter((ticket) => ticket.user === user);
+
+  res.json(userTickets);
+});
