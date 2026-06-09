@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import WebApp from "@twa-dev/sdk";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 const API_URL = "https://telegram-quiniela-app-production.up.railway.app";
@@ -30,6 +31,14 @@ function UserApp() {
   const [savedTicket, setSavedTicket] = useState(null);
   const [loading, setLoading] = useState(false);
   const [myTickets, setMyTickets] = useState([]);
+
+  const telegramUser = WebApp.initDataUnsafe?.user;
+
+  const userData = {
+    telegramId: telegramUser?.id || "local-user",
+    username: telegramUser?.username || "sin_username",
+    firstName: telegramUser?.first_name || "Invitado",
+  };
 
   const totalSelected = Object.keys(picks).length;
   const totalDoubles = Object.values(picks).filter(
@@ -70,7 +79,10 @@ function UserApp() {
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("user", "Invitado");
+    formData.append("user", userData.firstName);
+    formData.append("telegramId", userData.telegramId);
+    formData.append("username", userData.username);
+    formData.append("firstName", userData.firstName);
     formData.append("reference", reference);
     formData.append("picks", JSON.stringify(picks));
     formData.append("receipt", receipt);
@@ -92,7 +104,9 @@ function UserApp() {
 
   const loadMyTickets = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/tickets/user/Invitado`);
+      const res = await axios.get(
+        `${API_URL}/api/tickets/user/${userData.telegramId}`
+      );
       setMyTickets(res.data);
       setScreen("myTickets");
     } catch (error) {
@@ -122,6 +136,7 @@ function UserApp() {
       <div style={pageStyle}>
         <div style={headerCard}>
           <h2>📋 Mis Boletos</h2>
+          <p>👤 {userData.firstName}</p>
           <p>Consulta el estado de tus jugadas.</p>
         </div>
 
@@ -174,6 +189,8 @@ function UserApp() {
           <p><b>Ticket:</b> {savedTicket?.id || "Pendiente"}</p>
           <p><b>Estado:</b> 🟡 Pago pendiente de revisión</p>
           <p><b>Referencia:</b> {reference}</p>
+          <p><b>Jugador:</b> {userData.firstName}</p>
+          <p><b>Telegram ID:</b> {userData.telegramId}</p>
           <p><b>Comprobante:</b> {receipt?.name}</p>
 
           <button style={mainButton} onClick={loadMyTickets}>
@@ -310,6 +327,7 @@ function UserApp() {
     <div style={pageStyle}>
       <div style={headerCard}>
         <h2>🏆 PROMOCIÓN MUNDIAL</h2>
+        <p>👤 {userData.firstName}</p>
         <h1 style={{ color: "#facc15" }}>GANA $100,000</h1>
         <p>Selecciona 12 ganadores y 2 dobles oportunidades</p>
 
@@ -453,7 +471,7 @@ function AdminPanel() {
   const rejected = tickets.filter((t) => t.status === "rejected").length;
 
   const filteredTickets = tickets.filter((ticket) => {
-    const text = `${ticket.id} ${ticket.reference} ${ticket.status} ${ticket.user}`.toLowerCase();
+    const text = `${ticket.id} ${ticket.reference} ${ticket.status} ${ticket.user} ${ticket.telegramId} ${ticket.username}`.toLowerCase();
     return text.includes(search.toLowerCase());
   });
 
@@ -488,6 +506,8 @@ function AdminPanel() {
         <div key={ticket.id} style={cardStyle}>
           <h3>🎟️ {ticket.id}</h3>
           <p><b>Usuario:</b> {ticket.user}</p>
+          <p><b>Telegram ID:</b> {ticket.telegramId || "No registrado"}</p>
+          <p><b>Username:</b> @{ticket.username || "sin_username"}</p>
           <p><b>Referencia:</b> {ticket.reference}</p>
           <p><b>Estado:</b> {ticket.status}</p>
           <p><b>Fecha:</b> {ticket.createdAt}</p>
