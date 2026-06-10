@@ -25,7 +25,7 @@ const partidosData = [
 
 function UserApp() {
   const [picks, setPicks] = useState({});
-  const [screen, setScreen] = useState("ticket");
+  const [screen, setScreen] = useState("home");
   const [reference, setReference] = useState("");
   const [receipt, setReceipt] = useState(null);
   const [savedTicket, setSavedTicket] = useState(null);
@@ -47,6 +47,15 @@ function UserApp() {
 
   const isValid = totalSelected === 14 && totalDoubles === 2;
   const progress = Math.round((totalSelected / 14) * 100);
+
+  const BottomMenu = () => (
+    <div style={bottomMenu}>
+      <button style={menuBtn} onClick={() => setScreen("home")}>🏠<br />Inicio</button>
+      <button style={menuBtn} onClick={() => setScreen("ticket")}>🎟️<br />Boleto</button>
+      <button style={menuBtn} onClick={loadMyTickets}>📋<br />Mis Boletos</button>
+      <button style={menuBtn} onClick={() => setScreen("support")}>🆘<br />Soporte</button>
+    </div>
+  );
 
   const copyText = async (text, message) => {
     try {
@@ -104,15 +113,10 @@ function UserApp() {
 
   const loadMyTickets = async (showScreen = true) => {
     try {
-      const res = await axios.get(
-        `${API_URL}/api/tickets/user/${userData.telegramId}`
-      );
-
+      const res = await axios.get(`${API_URL}/api/tickets/user/${userData.telegramId}`);
       setMyTickets(res.data);
 
-      if (showScreen) {
-        setScreen("myTickets");
-      }
+      if (showScreen) setScreen("myTickets");
     } catch (error) {
       console.error(error);
     }
@@ -121,11 +125,7 @@ function UserApp() {
   useEffect(() => {
     if (screen === "myTickets") {
       loadMyTickets(false);
-
-      const interval = setInterval(() => {
-        loadMyTickets(false);
-      }, 10000);
-
+      const interval = setInterval(() => loadMyTickets(false), 10000);
       return () => clearInterval(interval);
     }
   }, [screen]);
@@ -139,12 +139,66 @@ function UserApp() {
     fontSize: 15,
     cursor: "pointer",
     color: selected ? "#020617" : "white",
-    background: selected
-      ? type === "double"
-        ? "#facc15"
-        : "#22c55e"
-      : "#1e293b",
+    background: selected ? (type === "double" ? "#facc15" : "#22c55e") : "#1e293b",
   });
+
+  if (screen === "home") {
+    return (
+      <div style={pageStyle}>
+        <div style={headerCard}>
+          <h2>🏆 Bienvenido</h2>
+          <h1 style={{ color: "#facc15" }}>PROMOCIÓN MUNDIAL</h1>
+          <p>👤 {userData.firstName}</p>
+          <p>Apuesta $1,000 y gana $100,000.</p>
+          <p>Selecciona 12 ganadores y 2 dobles oportunidades.</p>
+
+          <button style={mainButton} onClick={() => setScreen("ticket")}>
+            🎟️ Crear Boleto
+          </button>
+
+          <button style={secondaryButton} onClick={loadMyTickets}>
+            📋 Ver Mis Boletos
+          </button>
+        </div>
+
+        <div style={cardStyle}>
+          <h3>📋 Reglas</h3>
+          <p>✅ Debes completar los 14 partidos.</p>
+          <p>✅ Solo puedes usar 2 dobles oportunidades.</p>
+          <p>✅ Luego debes pagar y enviar comprobante.</p>
+        </div>
+
+        <div style={{ height: 90 }} />
+        <BottomMenu />
+      </div>
+    );
+  }
+
+  if (screen === "support") {
+    return (
+      <div style={pageStyle}>
+        <div style={headerCard}>
+          <h2>🆘 Soporte</h2>
+          <p>Contacta al administrador si tienes problemas con tu boleto o pago.</p>
+        </div>
+
+        <div style={cardStyle}>
+          <p><b>Estado de pagos:</b> Validación manual.</p>
+          <p><b>Consejo:</b> Conserva siempre tu comprobante.</p>
+
+          <button
+            style={mainButton}
+            onClick={() => window.open("https://t.me/TU_USUARIO_ADMIN", "_blank")}
+          >
+            📩 Contactar soporte
+          </button>
+        </div>
+
+        <div style={{ height: 90 }} />
+        <BottomMenu />
+      </div>
+    );
+  }
 
   if (screen === "myTickets") {
     return (
@@ -164,9 +218,7 @@ function UserApp() {
         {myTickets.map((ticket) => (
           <div key={ticket.id} style={cardStyle}>
             <h3>🎟️ {ticket.id}</h3>
-            <p>
-              <b>Referencia:</b> {ticket.reference}
-            </p>
+            <p><b>Referencia:</b> {ticket.reference}</p>
 
             <div
               style={{
@@ -192,9 +244,7 @@ function UserApp() {
                 : "🟡 PENDIENTE DE VALIDACIÓN"}
             </div>
 
-            <p>
-              <b>Fecha:</b> {ticket.createdAt}
-            </p>
+            <p><b>Fecha:</b> {ticket.createdAt}</p>
 
             <details>
               <summary style={{ cursor: "pointer", color: "#facc15" }}>
@@ -205,9 +255,8 @@ function UserApp() {
           </div>
         ))}
 
-        <button style={mainButton} onClick={() => setScreen("ticket")}>
-          Crear nuevo boleto
-        </button>
+        <div style={{ height: 90 }} />
+        <BottomMenu />
       </div>
     );
   }
@@ -222,33 +271,20 @@ function UserApp() {
         </div>
 
         <div style={cardStyle}>
-          <p>
-            <b>Ticket:</b> {savedTicket?.id || "Pendiente"}
-          </p>
-          <p>
-            <b>Estado:</b> 🟡 Pago pendiente de revisión
-          </p>
-          <p>
-            <b>Referencia:</b> {reference}
-          </p>
-          <p>
-            <b>Jugador:</b> {userData.firstName}
-          </p>
-          <p>
-            <b>Telegram ID:</b> {userData.telegramId}
-          </p>
-          <p>
-            <b>Comprobante:</b> {receipt?.name}
-          </p>
+          <p><b>Ticket:</b> {savedTicket?.id || "Pendiente"}</p>
+          <p><b>Estado:</b> 🟡 Pago pendiente de revisión</p>
+          <p><b>Referencia:</b> {reference}</p>
+          <p><b>Jugador:</b> {userData.firstName}</p>
+          <p><b>Telegram ID:</b> {userData.telegramId}</p>
+          <p><b>Comprobante:</b> {receipt?.name}</p>
 
           <button style={mainButton} onClick={loadMyTickets}>
             📋 Ver Mis Boletos
           </button>
-
-          <button style={secondaryButton} onClick={() => setScreen("ticket")}>
-            Crear nuevo boleto
-          </button>
         </div>
+
+        <div style={{ height: 90 }} />
+        <BottomMenu />
       </div>
     );
   }
@@ -264,9 +300,7 @@ function UserApp() {
         </div>
 
         <div style={cardStyle}>
-          <label>
-            <b>📝 Referencia de pago</b>
-          </label>
+          <label><b>📝 Referencia de pago</b></label>
           <input
             value={reference}
             onChange={(e) => setReference(e.target.value)}
@@ -274,9 +308,7 @@ function UserApp() {
             style={inputStyle}
           />
 
-          <label>
-            <b>📸 Captura del comprobante</b>
-          </label>
+          <label><b>📸 Captura del comprobante</b></label>
           <input
             type="file"
             accept="image/*"
@@ -284,11 +316,7 @@ function UserApp() {
             style={fileInputStyle}
           />
 
-          {receipt && (
-            <p style={{ color: "#22c55e" }}>
-              ✅ Archivo seleccionado: {receipt.name}
-            </p>
-          )}
+          {receipt && <p style={{ color: "#22c55e" }}>✅ Archivo seleccionado: {receipt.name}</p>}
 
           <button
             disabled={!canSend}
@@ -326,22 +354,15 @@ function UserApp() {
           <p>3. Toma captura y envía el comprobante.</p>
 
           <div style={paymentBox}>
-            <h3 style={{ color: "#facc15", marginTop: 0 }}>
-              💳 Datos para el pago
-            </h3>
-
-            <p>
-              <b>Importe:</b> $1,000
-            </p>
+            <h3 style={{ color: "#facc15", marginTop: 0 }}>💳 Datos para el pago</h3>
+            <p><b>Importe:</b> $1,000</p>
 
             <div style={copyBox}>
               <b>Tarjeta:</b>
               <div style={copyRow}>
                 <span style={copyTextStyle}>9205 1299 7241 1939</span>
                 <button
-                  onClick={() =>
-                    copyText("9205129972411939", "Tarjeta copiada")
-                  }
+                  onClick={() => copyText("9205129972411939", "Tarjeta copiada")}
                   style={copyButton}
                 >
                   📋 Copiar
@@ -370,11 +391,10 @@ function UserApp() {
           <button style={mainButton} onClick={() => setScreen("receipt")}>
             ✅ YA REALICÉ EL PAGO
           </button>
-
-          <button style={secondaryButton} onClick={() => setScreen("ticket")}>
-            Volver al boleto
-          </button>
         </div>
+
+        <div style={{ height: 90 }} />
+        <BottomMenu />
       </div>
     );
   }
@@ -386,10 +406,6 @@ function UserApp() {
         <p>👤 {userData.firstName}</p>
         <h1 style={{ color: "#facc15" }}>GANA $100,000</h1>
         <p>Selecciona 12 ganadores y 2 dobles oportunidades</p>
-
-        <button style={secondaryButton} onClick={loadMyTickets}>
-          📋 Mis Boletos
-        </button>
 
         <div style={progressOuter}>
           <div style={{ ...progressInner, width: `${progress}%` }} />
@@ -421,41 +437,20 @@ function UserApp() {
             </div>
 
             <div style={optionsRow}>
-              <button
-                style={optionStyle(selected === "1", "normal")}
-                onClick={() => select(i, "1")}
-              >
-                1
-              </button>
-              <button
-                style={optionStyle(selected === "2", "normal")}
-                onClick={() => select(i, "2")}
-              >
-                2
-              </button>
-              <button
-                style={optionStyle(selected === "1X", "double")}
-                onClick={() => select(i, "1X")}
-              >
-                1X
-              </button>
-              <button
-                style={optionStyle(selected === "X2", "double")}
-                onClick={() => select(i, "X2")}
-              >
-                X2
-              </button>
+              <button style={optionStyle(selected === "1", "normal")} onClick={() => select(i, "1")}>1</button>
+              <button style={optionStyle(selected === "2", "normal")} onClick={() => select(i, "2")}>2</button>
+              <button style={optionStyle(selected === "1X", "double")} onClick={() => select(i, "1X")}>1X</button>
+              <button style={optionStyle(selected === "X2", "double")} onClick={() => select(i, "X2")}>X2</button>
             </div>
 
             <p style={{ color: "#94a3b8", marginBottom: 0 }}>
-              Selección:{" "}
-              <b style={{ color: "white" }}>{selected || "Ninguna"}</b>
+              Selección: <b style={{ color: "white" }}>{selected || "Ninguna"}</b>
             </p>
           </div>
         );
       })}
 
-      <div style={{ height: 95 }} />
+      <div style={{ height: 120 }} />
 
       <div style={bottomBar}>
         <button
@@ -476,6 +471,8 @@ function UserApp() {
           </small>
         )}
       </div>
+
+      <BottomMenu />
     </div>
   );
 }
@@ -519,8 +516,6 @@ function AdminPanel() {
       <div style={pageStyle}>
         <div style={cardStyle}>
           <h1>🔒 Acceso Admin</h1>
-          <p>Introduce el código de administrador.</p>
-
           <input
             type="password"
             value={adminCode}
@@ -548,8 +543,7 @@ function AdminPanel() {
   const rejected = tickets.filter((t) => t.status === "rejected").length;
 
   const filteredTickets = tickets.filter((ticket) => {
-    const text =
-      `${ticket.id} ${ticket.reference} ${ticket.status} ${ticket.user} ${ticket.telegramId} ${ticket.username}`.toLowerCase();
+    const text = `${ticket.id} ${ticket.reference} ${ticket.status} ${ticket.user} ${ticket.telegramId} ${ticket.username}`.toLowerCase();
     return text.includes(search.toLowerCase());
   });
 
@@ -561,31 +555,13 @@ function AdminPanel() {
       </div>
 
       <div style={adminStats}>
-        <div>
-          🎟️ Total
-          <br />
-          <b>{tickets.length}</b>
-        </div>
-        <div>
-          🟡 Pendientes
-          <br />
-          <b>{pending}</b>
-        </div>
-        <div>
-          ✅ Aprobados
-          <br />
-          <b>{approved}</b>
-        </div>
-        <div>
-          ❌ Rechazados
-          <br />
-          <b>{rejected}</b>
-        </div>
+        <div>🎟️ Total<br /><b>{tickets.length}</b></div>
+        <div>🟡 Pendientes<br /><b>{pending}</b></div>
+        <div>✅ Aprobados<br /><b>{approved}</b></div>
+        <div>❌ Rechazados<br /><b>{rejected}</b></div>
       </div>
 
-      <button style={secondaryButton} onClick={loadTickets}>
-        🔄 Actualizar
-      </button>
+      <button style={secondaryButton} onClick={loadTickets}>🔄 Actualizar</button>
 
       <input
         value={search}
@@ -599,31 +575,16 @@ function AdminPanel() {
       {filteredTickets.map((ticket) => (
         <div key={ticket.id} style={cardStyle}>
           <h3>🎟️ {ticket.id}</h3>
-          <p>
-            <b>Usuario:</b> {ticket.user}
-          </p>
-          <p>
-            <b>Telegram ID:</b> {ticket.telegramId || "No registrado"}
-          </p>
-          <p>
-            <b>Username:</b> @{ticket.username || "sin_username"}
-          </p>
-          <p>
-            <b>Referencia:</b> {ticket.reference}
-          </p>
-          <p>
-            <b>Estado:</b> {ticket.status}
-          </p>
-          <p>
-            <b>Fecha:</b> {ticket.createdAt}
-          </p>
+          <p><b>Usuario:</b> {ticket.user}</p>
+          <p><b>Telegram ID:</b> {ticket.telegramId || "No registrado"}</p>
+          <p><b>Username:</b> @{ticket.username || "sin_username"}</p>
+          <p><b>Referencia:</b> {ticket.reference}</p>
+          <p><b>Estado:</b> {ticket.status}</p>
+          <p><b>Fecha:</b> {ticket.createdAt}</p>
 
           {ticket.receipt && (
             <div style={{ marginTop: 12 }}>
-              <p style={{ color: "#38bdf8", fontWeight: "bold" }}>
-                📷 Comprobante:
-              </p>
-
+              <p style={{ color: "#38bdf8", fontWeight: "bold" }}>📷 Comprobante:</p>
               <img
                 src={`${API_URL}/uploads/${ticket.receipt}`}
                 alt="Comprobante de pago"
@@ -636,44 +597,17 @@ function AdminPanel() {
                   background: "#020617",
                 }}
               />
-
-              <a
-                href={`${API_URL}/uploads/${ticket.receipt}`}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: "#facc15",
-                  display: "block",
-                  marginTop: 8,
-                  fontWeight: "bold",
-                }}
-              >
-                Abrir imagen completa
-              </a>
             </div>
           )}
 
           <details style={{ marginTop: 12 }}>
-            <summary style={{ cursor: "pointer", color: "#facc15" }}>
-              Ver selecciones
-            </summary>
+            <summary style={{ cursor: "pointer", color: "#facc15" }}>Ver selecciones</summary>
             <pre style={preStyle}>{JSON.stringify(ticket.picks, null, 2)}</pre>
           </details>
 
           <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
-            <button
-              style={approveBtn}
-              onClick={() => updateStatus(ticket.id, "approved")}
-            >
-              ✅ Aprobar
-            </button>
-
-            <button
-              style={rejectBtn}
-              onClick={() => updateStatus(ticket.id, "rejected")}
-            >
-              ❌ Rechazar
-            </button>
+            <button style={approveBtn} onClick={() => updateStatus(ticket.id, "approved")}>✅ Aprobar</button>
+            <button style={rejectBtn} onClick={() => updateStatus(ticket.id, "rejected")}>❌ Rechazar</button>
           </div>
         </div>
       ))}
@@ -725,20 +659,9 @@ const matchRow = {
   marginBottom: 14,
 };
 
-const teamBox = {
-  width: "42%",
-  textAlign: "center",
-};
-
-const flagStyle = {
-  fontSize: 38,
-  marginBottom: 4,
-};
-
-const optionsRow = {
-  display: "flex",
-  gap: 8,
-};
+const teamBox = { width: "42%", textAlign: "center" };
+const flagStyle = { fontSize: 38, marginBottom: 4 };
+const optionsRow = { display: "flex", gap: 8 };
 
 const progressOuter = {
   width: "100%",
@@ -749,10 +672,7 @@ const progressOuter = {
   marginTop: 14,
 };
 
-const progressInner = {
-  height: "100%",
-  background: "#22c55e",
-};
+const progressInner = { height: "100%", background: "#22c55e" };
 
 const statsRow = {
   display: "flex",
@@ -765,11 +685,33 @@ const bottomBar = {
   position: "fixed",
   left: 0,
   right: 0,
-  bottom: 0,
+  bottom: 58,
   background: "#020617",
   borderTop: "1px solid #334155",
   padding: 12,
   textAlign: "center",
+  zIndex: 998,
+};
+
+const bottomMenu = {
+  position: "fixed",
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: "#020617",
+  borderTop: "1px solid #334155",
+  display: "grid",
+  gridTemplateColumns: "repeat(4, 1fr)",
+  padding: "8px 4px",
+  zIndex: 999,
+};
+
+const menuBtn = {
+  background: "transparent",
+  border: "none",
+  color: "white",
+  fontSize: 12,
+  fontWeight: "bold",
 };
 
 const mainButton = {
@@ -849,49 +791,8 @@ const inputStyle = {
   fontSize: 16,
 };
 
-const fileInputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: 14,
-  marginTop: 8,
-  marginBottom: 16,
-  borderRadius: 12,
-  border: "1px solid #334155",
-  background: "#020617",
-  color: "white",
-};
-
-const adminStats = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-  marginBottom: 14,
-};
-
-const preStyle = {
-  background: "#020617",
-  color: "#e5e7eb",
-  padding: 10,
-  borderRadius: 10,
-  overflowX: "auto",
-};
-
-const approveBtn = {
-  flex: 1,
-  padding: 12,
-  borderRadius: 10,
-  border: "none",
-  background: "#22c55e",
-  color: "white",
-  fontWeight: "bold",
-};
-
-const rejectBtn = {
-  flex: 1,
-  padding: 12,
-  borderRadius: 10,
-  border: "none",
-  background: "#ef4444",
-  color: "white",
-  fontWeight: "bold",
-};
+const fileInputStyle = { ...inputStyle };
+const adminStats = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 };
+const preStyle = { background: "#020617", color: "#e5e7eb", padding: 10, borderRadius: 10, overflowX: "auto" };
+const approveBtn = { flex: 1, padding: 12, borderRadius: 10, border: "none", background: "#22c55e", color: "white", fontWeight: "bold" };
+const rejectBtn = { flex: 1, padding: 12, borderRadius: 10, border: "none", background: "#ef4444", color: "white", fontWeight: "bold" };
